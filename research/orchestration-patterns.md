@@ -1,20 +1,18 @@
 # Orchestration Patterns — Research for Dispatch Design
 
-**Date:** 2026-02-12
-**Author:** Architect 🏛️
 **Purpose:** Survey of orchestration models and why the 911 dispatcher pattern wins
 
 ---
 
 ## Patterns Considered
 
-### 1. Manager Pattern (Atlas v1)
+### 1. Manager Pattern
 The orchestrator is a smart manager who can do work when needed and delegates when appropriate.
 
 **Pros:** Flexible, can handle edge cases, feels natural
 **Cons:** "When needed" always expands. Manager becomes bottleneck. The very flexibility is the failure mode.
 
-**Verdict:** ❌ Failed in production. Atlas proved that a manager who CAN do work WILL do work.
+**Verdict:** ❌ Failed in production. A manager who CAN do work WILL do work.
 
 ### 2. Router Pattern (Pure)
 Stateless request router. Maps input to agent, forwards, done. No intelligence, no context, no memory.
@@ -24,7 +22,7 @@ Stateless request router. Maps input to agent, forwards, done. No intelligence, 
 
 **Verdict:** ❌ Too dumb. Routing without context assembly is just forwarding email.
 
-### 3. 911 Dispatcher Pattern (Dispatch v2) ✅
+### 3. 911 Dispatcher Pattern ✅
 Intelligent routing with zero execution. The dispatcher understands the request, assembles context, routes to the right responder, and tracks status. But NEVER leaves the switchboard.
 
 Key properties:
@@ -34,7 +32,7 @@ Key properties:
 - **Status tracking** — knows what's in flight, reports back
 - **Always available** — because they never leave the desk
 
-**Pros:** Combines routing intelligence with zero-work guarantee. The hard boundary prevents scope creep. Always available to Josh.
+**Pros:** Combines routing intelligence with zero-work guarantee. The hard boundary prevents scope creep. Always available to the user.
 **Cons:** Requires discipline in the SOUL.md to maintain the boundary. Slightly more latency than a pure router (context assembly takes a few seconds).
 
 **Verdict:** ✅ The right pattern. Intelligent enough to be useful, constrained enough to never bottleneck.
@@ -43,15 +41,15 @@ Key properties:
 Events published to a bus, agents subscribe to topics they handle. No central orchestrator.
 
 **Pros:** Fully decentralized, scales infinitely, no single point of failure
-**Cons:** No one assembles context. No one tracks status. No one answers "what's happening?" Josh loses visibility.
+**Cons:** No one assembles context. No one tracks status. No one answers "what's happening?" User loses visibility.
 
-**Verdict:** ❌ Loses the human-in-the-loop. Josh needs a single point of contact.
+**Verdict:** ❌ Loses the human-in-the-loop. The user needs a single point of contact.
 
 ### 5. Hierarchical Pattern
 Multi-level management. Dispatch → Department leads → Individual agents.
 
 **Pros:** Scales to hundreds of agents, natural decomposition
-**Cons:** Overkill for 18 agents. Adds latency. More points of failure.
+**Cons:** Overkill for small-to-medium fleets. Adds latency. More points of failure.
 
 **Verdict:** ❌ For now. May be relevant at 50+ agents.
 
@@ -72,9 +70,9 @@ The single most important implementation detail in the entire orchestration desi
 - Appropriate for: one-shot tasks, research, lookups, anything throwaway
 
 ### Why This Matters
-When Mason is working on Agent Royale and you spawn a new session for a follow-up task, Mason starts from zero. Doesn't know the codebase decisions, doesn't remember the pricing engine implementation, doesn't know which endpoints are done. All that context — gone.
+When a coding agent is working on a project and you spawn a new session for a follow-up task, it starts from zero. Doesn't know the codebase decisions, doesn't remember prior implementations, doesn't know what's done. All that context — gone.
 
-When you `sessions_send` to `agent:mason:main`, Mason wakes up with full context. Reads MEMORY.md, sees yesterday's work, knows the state of the project. Can pick up exactly where it left off.
+When you `sessions_send` to its main session, it wakes up with full context. Reads MEMORY.md, sees yesterday's work, knows the project state. Can pick up exactly where it left off.
 
 **This distinction is the difference between a team of colleagues and a pool of amnesiacs.**
 
@@ -83,19 +81,19 @@ When you `sessions_send` to `agent:mason:main`, Mason wakes up with full context
 The dispatcher's superpower: launching multiple agents simultaneously.
 
 ```
-Josh: "Launch prep — images, copy, and tweets"
+User: "Launch prep — images, copy, and tweets"
 
 WRONG (serial):
-  t=0:  spawn Imager → wait 3 min → result
-  t=3:  spawn Sarah → wait 3 min → result
-  t=6:  spawn Twin → wait 2 min → result
+  t=0:  send to image agent → wait 3 min → result
+  t=3:  send to writing agent → wait 3 min → result
+  t=6:  send to social agent → wait 2 min → result
   Total: 8 minutes
 
 RIGHT (parallel):
-  t=0:  send to Imager, Sarah, Twin simultaneously
-  t=2:  Twin finishes → report to Josh
-  t=3:  Imager finishes → report to Josh
-  t=3:  Sarah finishes → report to Josh
+  t=0:  send to all three simultaneously
+  t=2:  social agent finishes → report to user
+  t=3:  image agent finishes → report to user
+  t=3:  writing agent finishes → report to user
   Total: 3 minutes
 ```
 
@@ -106,11 +104,11 @@ Report results as they arrive. Don't wait for all to finish.
 Some tasks have dependencies: A must finish before B can start.
 
 ```
-Josh: "Design the new logo, then use it on the landing page"
+User: "Design the new logo, then use it on the landing page"
 
-  t=0:  send to Imager for logo
-  t=3:  Imager finishes → report to Josh → send to Pixel with logo output
-  t=6:  Pixel finishes → report to Josh
+  t=0:  send to image agent for logo
+  t=3:  image agent finishes → report to user → send to design agent with logo
+  t=6:  design agent finishes → report to user
 ```
 
 Dispatch tracks the dependency and triggers the next step automatically.

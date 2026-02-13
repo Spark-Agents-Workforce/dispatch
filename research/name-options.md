@@ -1,8 +1,6 @@
-# Name Options — Orchestrator Rename Research
+# Name Options — Orchestrator Naming Research
 
-**Date:** 2026-02-12
-**Author:** Architect 🏛️
-**Purpose:** Evaluate name options for the Atlas replacement
+**Purpose:** Evaluate name options for the orchestrator agent
 
 ---
 
@@ -34,8 +32,7 @@ The name must communicate three things instantly:
 - "Dispatch" is universally understood: 911 dispatchers, taxi dispatchers, trucking dispatchers. Everyone knows a dispatcher routes, doesn't go on the call.
 - The word itself encodes the constraint: dispatchers dispatch. They don't respond to the emergency.
 - 🚦 (traffic light) is the perfect emoji — controls flow, doesn't participate in it.
-- Short, punchy, action-oriented. Fits Josh's communication style.
-- Pairs well with the existing roster names (Atlas, Khan, Pixel, Mason — all short, distinctive).
+- Short, punchy, action-oriented.
 
 **Why alternatives fail:**
 - Nexus/Hub/Switch: communicate centrality but not the zero-work constraint
@@ -43,8 +40,8 @@ The name must communicate three things instantly:
 - Relay: too passive — Dispatch has intelligence, Relay implies dumb forwarding
 - Tower: implies authority/hierarchy — Dispatch is a peer coordinator
 
-## Previous Name: Atlas
+## The Naming Principle
 
-Atlas was named for "holding up the world" — carrying the weight. This was the wrong metaphor. The orchestrator shouldn't carry weight. It should direct traffic. The name itself encouraged Atlas to take on too much.
+A previous orchestrator was named "Atlas" — for "holding up the world." Carrying the weight. This was the wrong metaphor. The orchestrator shouldn't carry weight. It should direct traffic. The name itself encouraged Atlas to take on too much.
 
 Dispatch's name actively prevents this. You don't tell a dispatcher to go fight the fire.

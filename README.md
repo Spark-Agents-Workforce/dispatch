@@ -1,17 +1,19 @@
-# Dispatch 🚦 — The Orchestrator v2
+# Dispatch 🚦 — Universal AI Orchestrator for OpenClaw
 
-Dispatch replaces Atlas as the main orchestrator for Josh's 18-agent AI workforce. It's a pure non-blocking router based on the 911 dispatcher model: receive, acknowledge, route, report. Zero work. Ever.
+Dispatch is a drop-in orchestrator agent for [OpenClaw](https://github.com/openclaw/openclaw). It's a pure non-blocking router based on the 911 dispatcher model: receive, acknowledge, route, report. Zero work. Ever.
+
+**Works with any fleet.** Dispatch auto-discovers your agents from the gateway config — no hardcoded names, no manual routing tables. Whether you have 3 agents or 30, Dispatch learns your roster and starts routing.
 
 ## Why Dispatch Exists
 
-Atlas (the previous orchestrator) failed because it kept doing work instead of routing. Research tasks, file summaries, planning sessions — all locked Josh out while Atlas was busy. See `research/atlas-autopsy.md` for the full post-mortem.
+Most orchestrator agents fail because they start doing work instead of routing. Research tasks, file summaries, planning sessions — the orchestrator gets busy and the user is locked out. See `research/atlas-autopsy.md` for a real post-mortem of this failure mode.
 
 Dispatch fixes this with one absolute rule: **the dispatcher never leaves the switchboard.**
 
 ## Architecture
 
 ```
-         Josh (iMessage / Slack / webchat)
+         User (iMessage / Slack / webchat / any channel)
                     │
                     ▼
             ┌──────────────┐
@@ -34,9 +36,9 @@ This is the critical design decision:
 
 ### sessions_send → Named Agents (Persistent)
 ```
-sessions_send(sessionKey="agent:mason:main", message="...")
+sessions_send(sessionKey="agent:dev:main", message="...")
 ```
-Agent wakes in its main session. Has access to MEMORY.md, daily notes, full project context. Use for ALL 18 named agents.
+Agent wakes in its main session. Has access to MEMORY.md, daily notes, full project context. Use for ALL named agents in your fleet.
 
 ### sessions_spawn → Subagents (Disposable)
 ```
@@ -46,64 +48,29 @@ Fresh session, no memory, no prior context. Use for one-shot research, lookups, 
 
 **Rule:** Named agents ALWAYS get sessions_send. NEVER spawn a named agent as a disposable subagent.
 
-## The 18-Agent Roster
+## Quick Start
 
-| Agent | ID | Domain |
-|-------|-----|--------|
-| Atlas 🔱 | `main` | Legacy (only if explicitly requested) |
-| Khan 🦞 | `genghisclawn` | X/Twitter for OpenClaw |
-| Pixel 🎨 | `pixel` | Web design, brand sites |
-| Iris 👁️ | `uxplorer` | UX/UI, Orchestrator V3 |
-| Sensei 🥋 | `sensei` | Tutorials, docs |
-| ClawHost 🏗️ | `clawhost` | Heavy coding, TryClaw |
-| Imager 🖼️ | `studio` | Image generation |
-| Exodus 🔓 | `exodus` | Memory liberation |
-| Printer 💵 | `print` | Trading, markets |
-| Twin ⚡ | `joshuaday` | X/Twitter as Josh |
-| Auditor 🔍 | `auditor` | QA, testing |
-| Architect 🏛️ | `architect` | Agent design |
-| Forge 🔥 | `forge` | Product strategy |
-| Sarah ✒️ | `sarah` | PR, communications |
-| Ledger 📉 | `ledger` | Cost analysis |
-| Royale 👑 | `royale` | Agent Royale PM |
-| Mason 🧱 | `mason` | Agent Royale dev |
-| Sparky ⚡ | `sparky` | Customer support |
+### 1. Copy agent files to your OpenClaw
 
-## Files
-
-| File | Purpose |
-|------|---------|
-| `SOUL.md` | Identity, zero-work rule, routing table, 5 examples |
-| `AGENTS.md` | Boot sequence, routing loop, anti-patterns, escalation |
-| `IDENTITY.md` | Name, emoji, vibe |
-| `USER.md` | Josh's needs from the orchestrator |
-| `TOOLS.md` | 3 tools only: sessions_send, sessions_spawn, sessions_list |
-| `README.md` | This file |
-| `research/atlas-autopsy.md` | What went wrong with Atlas |
-| `research/orchestration-patterns.md` | Why 911 dispatcher pattern wins |
-| `research/name-options.md` | Name evaluation (why "Dispatch") |
-| `research/verification.md` | Survivor's Gate results + test scenarios |
-
-## Deployment
-
-### 1. Copy files to main agent workspace
 ```bash
-# Dispatch replaces Atlas in the main slot
-cp v2/SOUL.md ~/.openclaw/agents/main/SOUL.md
-cp v2/AGENTS.md ~/.openclaw/agents/main/AGENTS.md
-cp v2/IDENTITY.md ~/.openclaw/agents/main/IDENTITY.md
-cp v2/USER.md ~/.openclaw/agents/main/USER.md
-cp v2/TOOLS.md ~/.openclaw/agents/main/TOOLS.md
+# Clone this repo
+git clone https://github.com/Spark-Agents-Workforce/dispatch.git
+cd dispatch
+
+# Copy to OpenClaw agent config (Dispatch replaces your main agent)
+mkdir -p ~/.openclaw/agents/main
+cp SOUL.md AGENTS.md IDENTITY.md USER.md TOOLS.md ~/.openclaw/agents/main/
 
 # Also copy to workspace
-cp v2/SOUL.md ~/.openclaw/workspace/SOUL.md
-cp v2/AGENTS.md ~/.openclaw/workspace/AGENTS.md
-cp v2/IDENTITY.md ~/.openclaw/workspace/IDENTITY.md
-cp v2/USER.md ~/.openclaw/workspace/USER.md
-cp v2/TOOLS.md ~/.openclaw/workspace/TOOLS.md
+cp SOUL.md AGENTS.md IDENTITY.md USER.md TOOLS.md ~/.openclaw/workspace/
 ```
 
-### 2. Update gateway config identity
+### 2. Fill in USER.md
+
+Edit `~/.openclaw/agents/main/USER.md` (and `~/.openclaw/workspace/USER.md`) with your name, timezone, and communication preferences. This is the only file you need to customize.
+
+### 3. Update gateway config identity
+
 Edit `~/.openclaw/openclaw.json` — change the main agent identity:
 ```json
 {
@@ -115,23 +82,67 @@ Edit `~/.openclaw/openclaw.json` — change the main agent identity:
 }
 ```
 
-### 3. Restart
+### 4. Restart
+
 ```bash
 openclaw gateway restart
 ```
 
-### 4. Verify
-Send: "Who are you? List your routing rules."
-Expected: Fast, direct response identifying as Dispatch, referencing zero-work rule and 18-agent roster.
+### 5. Verify
+
+Send Dispatch a message: "Who are you? What agents do I have?"
+
+Dispatch should:
+- Identify itself (fast, direct, references the zero-work rule)
+- Run `sessions_list` to discover your agent roster
+- Store the roster in MEMORY.md for future sessions
+
+## Files
+
+| File | Purpose | Customize? |
+|------|---------|------------|
+| `SOUL.md` | Identity, zero-work rule, routing logic, examples | No |
+| `AGENTS.md` | Boot sequence, routing loop, anti-patterns, first-boot discovery | No |
+| `IDENTITY.md` | Name, emoji, vibe | No |
+| `USER.md` | Your info — name, timezone, preferences | **Yes** |
+| `TOOLS.md` | 3 tools: sessions_send, sessions_spawn, sessions_list | No |
+| `README.md` | This file | — |
+| `research/` | Design rationale, pattern research, verification plan | — |
+
+## How Auto-Discovery Works
+
+Dispatch does not ship with a routing table. On first boot:
+
+1. Calls `sessions_list` to find all registered agents
+2. Reads each agent's `IDENTITY.md` to learn their domain
+3. Builds a routing table (name → ID → domain → dispatch method)
+4. Stores the table in `MEMORY.md`
+
+On subsequent boots, Dispatch loads its routing table from MEMORY.md. If the user mentions an agent Dispatch doesn't recognize, it re-runs discovery.
+
+This means Dispatch works with ANY OpenClaw fleet — no configuration beyond USER.md.
 
 ## Design Decisions
 
 | Decision | Choice | Reasoning |
 |----------|--------|-----------|
 | Pattern | 911 Dispatcher | Zero-work guarantee. See `research/orchestration-patterns.md` |
+| Roster | Auto-discovered | Works for any fleet. No hardcoded agent names. |
 | Boot files | 2 (SOUL + AGENTS) | Fast first response. Everything else on demand |
 | Named agents | sessions_send always | Preserve memory/context. See `research/atlas-autopsy.md` |
 | Response ceiling | 30 seconds | If it takes longer, you're doing work |
-| Model | Inherits global default (Opus 4.6) | Routing needs intelligence for context assembly |
-| Heartbeat | None | Purely reactive — responds when Josh messages |
+| Model | Inherits from global config | Routing needs intelligence for context assembly |
+| Heartbeat | None | Purely reactive — responds when the user messages |
 | Tools | 3 only | sessions_send, sessions_spawn, sessions_list |
+
+## Research
+
+The `research/` folder contains the design rationale:
+- **atlas-autopsy.md** — Post-mortem of a failed orchestrator (why zero-work is non-negotiable)
+- **orchestration-patterns.md** — Survey of 5 patterns, why 911 dispatcher wins
+- **name-options.md** — Why "Dispatch" (the name encodes the constraint)
+- **verification.md** — Survivor's Gate results, test scenarios, performance baselines
+
+## License
+
+MIT

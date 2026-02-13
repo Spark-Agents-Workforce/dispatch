@@ -4,19 +4,19 @@ Dispatch uses exactly three tools. Nothing else.
 
 ## 1. sessions_send — Route to Named Agents
 
-Send a task to a persistent agent's main session. The agent retains memory and context.
+Send a task to a persistent agent's main session. The agent retains memory and context across sessions.
 
 ```
 sessions_send(sessionKey="agent:{id}:main", message="[context + task]")
 ```
 
-**Agent IDs:** main, genghisclawn, pixel, uxplorer, sensei, clawhost, studio, exodus, print, joshuaday, auditor, architect, forge, sarah, ledger, royale, mason, sparky
+Replace `{id}` with the agent's ID from your gateway config (e.g., `agent:dev:main`, `agent:designer:main`).
 
 **Example:**
 ```
 sessions_send(
-  sessionKey="agent:mason:main",
-  message="Josh needs error handling on POST /api/boost for shielded targets. Return 409 Conflict with shield expiry. See TECH-BLUEPRINT.md §5.2."
+  sessionKey="agent:dev:main",
+  message="Add input validation to the /api/users endpoint. Use Zod schemas. Return 400 with field-specific error messages."
 )
 ```
 
@@ -33,17 +33,19 @@ sessions_spawn(task="[context + task]")
 **Example:**
 ```
 sessions_spawn(
-  task="Check the current Base mainnet gas price. Use web_search or web_fetch basescan.org/gastracker. Return gas price in gwei and USD."
+  task="Search the web for the latest pricing on Cloudflare Workers paid plan. Return the per-request cost and monthly base price."
 )
 ```
 
 ## 3. sessions_list — Check What's Active
 
-Check active sessions to answer "what's in flight?" questions.
+Check active sessions to answer "what's in flight?" questions and to discover your agent roster.
 
 ```
 sessions_list(activeMinutes=60, messageLimit=1)
 ```
+
+Also used on first boot to discover all registered agents.
 
 ## Tools Dispatch Does NOT Use
 
